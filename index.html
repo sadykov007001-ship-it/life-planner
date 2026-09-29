@@ -11,6 +11,11 @@
   --clay:#c98f78; --clay-d:#a86e58; --clay-l:#f3e2d9;
   --red:#c65b4e; --yellow:#d9a441; --shadow:0 2px 10px rgba(80,60,40,.07);
 }
+:root{--hfont:Georgia,"Times New Roman",serif;--radius:14px;--c1:#557d5f;--c2:#c98f78;--c3:#e0c3b3;--c4:#8fb396;--c5:#a86e58;--c6:#b9ccb9;--c7:#7a6a5c;--c8:#d9a441}
+:root[data-style="minimal"]{--bg:#f7f7f8;--card:#fff;--ink:#1c1c1e;--muted:#8e8e93;--line:#e5e5ea;--green:#1c1c1e;--green-d:#1c1c1e;--green-l:#efeff4;--clay:#3a6ff7;--clay-d:#3a6ff7;--clay-l:#e8eefe;--hfont:system-ui,-apple-system,"Segoe UI",sans-serif;--radius:12px;--c1:#3a6ff7;--c2:#1c1c1e;--c3:#8fb0ff;--c4:#c7c7cc;--c5:#5ac8fa;--c6:#34c759;--c7:#ff9f0a;--c8:#af52de}
+:root[data-style="lavender"]{--bg:#f7f3fb;--card:#fffdff;--ink:#3d3450;--muted:#948aa6;--line:#e8e0f1;--green:#9b87c9;--green-d:#7b67ab;--green-l:#ece6f7;--clay:#e79ab4;--clay-d:#c96b8c;--clay-l:#fbe7ee;--radius:20px;--c1:#9b87c9;--c2:#e79ab4;--c3:#c9bde6;--c4:#f5c6d5;--c5:#7b67ab;--c6:#a7d3c9;--c7:#f2c98a;--c8:#c96b8c}
+:root[data-style="forest"]{--bg:#eef0ea;--card:#fbfbf7;--ink:#1f2a22;--muted:#6f7a70;--line:#d9ded3;--green:#24402f;--green-d:#24402f;--green-l:#dfe7dc;--clay:#b8913a;--clay-d:#94731f;--clay-l:#f1e8d0;--radius:8px;--c1:#24402f;--c2:#b8913a;--c3:#6b8f71;--c4:#d8c48f;--c5:#3f6b4c;--c6:#a9bfa5;--c7:#7d5a2c;--c8:#e3d9b8}
+:root[data-style="night"]{--bg:#12131c;--card:#1b1d2a;--ink:#e8e8f2;--muted:#8d90a8;--line:#2c2f42;--green:#7c6cf2;--green-d:#a79cff;--green-l:#27264a;--clay:#f2709c;--clay-d:#ff8fb4;--clay-l:#3a2233;--shadow:none;--hfont:system-ui,-apple-system,"Segoe UI",sans-serif;--radius:16px;--c1:#7c6cf2;--c2:#f2709c;--c3:#4fd1c5;--c4:#f6ad55;--c5:#a79cff;--c6:#68d391;--c7:#63b3ed;--c8:#fc8181}
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#1d1b19; --card:#27241f; --ink:#ece5dc; --muted:#a39889; --line:#3a352e;
@@ -24,7 +29,7 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 20px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
-.logo{font-family:Georgia,serif;font-size:22px;color:var(--clay-d);letter-spacing:.5px;margin-right:auto}
+.logo{font-family:var(--hfont);font-size:22px;color:var(--clay-d);letter-spacing:.5px;margin-right:auto}
 nav{display:flex;gap:4px;flex-wrap:wrap}
 nav button,.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 13px;border-radius:9px;cursor:pointer;font:inherit}
 nav button.active{background:var(--green);color:#fff;border-color:var(--green)}
@@ -34,14 +39,18 @@ nav button.active{background:var(--green);color:#fff;border-color:var(--green)}
 .month{display:flex;align-items:center;gap:6px}
 .month span{min-width:120px;text-align:center;font-weight:600}
 main{max-width:1200px;margin:0 auto;padding:20px 16px 60px}
-h1{font-family:Georgia,serif;font-weight:400;color:var(--clay-d);font-size:40px;letter-spacing:6px;text-align:center;margin:6px 0 0;text-transform:uppercase}
+h1{font-family:var(--hfont);font-weight:400;color:var(--clay-d);font-size:40px;letter-spacing:6px;text-align:center;margin:6px 0 0;text-transform:uppercase}
 .sub{text-align:center;letter-spacing:4px;font-size:12px;color:var(--muted);margin-bottom:20px;text-transform:uppercase}
 .grid{display:grid;gap:16px}
 .g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
 .g4{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
 .card h3{margin:0;padding:11px 14px;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:#fff;background:var(--green)}
 .card h3.clay{background:var(--clay)}
+:root[data-style="minimal"] .card h3,:root[data-style="night"] .card h3{background:transparent;color:var(--ink);border-bottom:1px solid var(--line)}
+:root[data-style="minimal"] .card h3::before,:root[data-style="night"] .card h3::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:8px;vertical-align:1px}
+:root[data-style="minimal"] .card h3.clay::before,:root[data-style="night"] .card h3.clay::before{background:var(--clay)}
+#styleSel{padding:6px;border-radius:9px}
 .card .body{padding:14px}
 .stat{padding:16px;text-align:center}
 .stat b{display:block;font-size:26px;color:var(--clay-d)}
@@ -82,7 +91,7 @@ input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid
 .hidden{display:none!important}
 textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;width:100%;resize:vertical;margin:10px 0}
 .btn.on{background:var(--green);border-color:var(--green);color:#fff}
-.day{font-family:Georgia,serif;color:var(--clay-d);font-size:18px;margin:18px 0 8px}
+.day{font-family:var(--hfont);color:var(--clay-d);font-size:18px;margin:18px 0 8px}
 .note{padding:12px 14px;margin-bottom:10px}
 .note p{margin:0;white-space:pre-wrap;word-wrap:break-word}
 .note .meta{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:12px;margin-bottom:6px}
@@ -93,7 +102,12 @@ input.edit:hover,input.edit:focus{border-color:var(--line);background:var(--bg)}
 .done input.edit[data-f=title]{text-decoration:line-through;color:var(--muted)}
 .ren{cursor:pointer}.ren:hover{text-decoration:underline dotted}
 footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
-@media (max-width:600px){h1{font-size:28px;letter-spacing:3px} header{padding:10px 16px;position:static}}
+@media (max-width:600px){
+  nav{position:fixed;bottom:0;left:0;right:0;z-index:10;background:var(--card);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
+  nav button{border:none;border-radius:10px;padding:8px 2px;font-size:12px}
+  main{padding-bottom:90px} footer{padding-bottom:90px}
+  .logo{font-size:18px}
+  h1{font-size:28px;letter-spacing:3px} header{padding:10px 16px;position:static}}
 </style>
 </head>
 <body>
@@ -111,7 +125,10 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
     <span id="monthLabel"></span>
     <button class="btn small" id="next" aria-label="Следующий месяц">›</button>
   </div>
-  <button class="btn small" id="theme" title="Тема">◐</button>
+  <select id="styleSel" title="Стиль оформления">
+    <option value="">🎨 Терракота</option><option value="minimal">🎨 Минимал</option><option value="lavender">🎨 Лаванда</option><option value="forest">🎨 Лес и золото</option><option value="night">🎨 Ночь</option>
+  </select>
+  <button class="btn small" id="theme" title="Светлая / тёмная тема">◐</button>
 </header>
 <main>
   <div id="demoBanner" class="card hidden" style="padding:12px 16px;margin-bottom:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--clay-l)">
@@ -275,7 +292,8 @@ function donut(pct,center,sub,color='var(--green)'){
   <text x="65" y="66" text-anchor="middle" font-size="19" font-weight="700" fill="var(--clay-d)">${esc(center)}</text>
   <text x="65" y="84" text-anchor="middle" font-size="9" fill="var(--muted)" letter-spacing="1">${esc(sub||'')}</text></svg>`;
 }
-function pie(items,colors=PALETTE){
+const pal=()=>{const cs=getComputedStyle(document.documentElement);return [1,2,3,4,5,6,7,8].map(i=>cs.getPropertyValue('--c'+i).trim())};
+function pie(items,colors=pal()){
   items=items.filter(i=>i.v>0);
   const tot=items.reduce((a,b)=>a+b.v,0);
   if(!tot) return '<div class="empty">Пока нет данных</div>';
@@ -377,7 +395,7 @@ function renderTasks(){
   $('taskStats').innerHTML=[['Всего задач',T.length],['В работе',T.filter(t=>t.status==='В процессе').length],['Выполнено',done],['Просрочено',overdue],['Срок ≤ 7 дней',soon]]
     .map(([l,v],i)=>`<div class="card stat"><b style="${i===3&&v?'color:var(--red)':''}">${v}</b><small>${l}</small></div>`).join('');
   $('taskDonut').innerHTML=donut(T.length?done/T.length:0,(T.length?(done/T.length*100).toFixed(1):0)+'%','ВЫПОЛНЕНО');
-  const sc={'Выполнено':'#c98f78','Не начато':'#8fb396','В процессе':'#a8483c','В ожидании':'#e0d6cc'};
+  const P=pal(),sc={'Выполнено':P[0],'Не начато':P[3],'В процессе':P[1],'В ожидании':P[2]};
   $('statusPie').innerHTML=pie(STATUSES.map(s=>({l:s,v:T.filter(t=>t.status===s).length,c:sc[s]})));
   const fs=$('fStatus').value,fc=$('fCat').value;
   const list=T.filter(t=>(!fs||t.status===fs)&&(!fc||t.cat===fc)).sort((a,b)=>(a.status==='Выполнено')-(b.status==='Выполнено')||(a.due||'').localeCompare(b.due||''));
@@ -470,7 +488,10 @@ function renderAll(){
 $('nav').onclick=e=>{const b=e.target.closest('button');if(!b)return;tab=b.dataset.tab;try{localStorage.setItem(KEY+'-tab',tab)}catch(e){}renderAll()};
 $('prev').onclick=()=>{cur.setMonth(cur.getMonth()-1);renderAll()};
 $('next').onclick=()=>{cur.setMonth(cur.getMonth()+1);renderAll()};
-$('theme').onclick=()=>{const r=document.documentElement,dark=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;r.dataset.theme=dark?'light':'dark';try{localStorage.setItem(KEY+'-theme',r.dataset.theme)}catch(e){}};
+$('theme').onclick=()=>{const r=document.documentElement,dark=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;r.dataset.theme=dark?'light':'dark';renderAll();try{localStorage.setItem(KEY+'-theme',r.dataset.theme)}catch(e){}};
+const applyStyle=v=>{if(v)document.documentElement.dataset.style=v;else delete document.documentElement.dataset.style;$('styleSel').value=v||''};
+try{applyStyle(localStorage.getItem(KEY+'-style')||'')}catch(e){}
+$('styleSel').onchange=e=>{applyStyle(e.target.value);try{localStorage.setItem(KEY+'-style',e.target.value)}catch(err){}renderAll()};
 try{const t=localStorage.getItem(KEY+'-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}
 $('exportBtn').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,2)],{type:'application/json'}));a.download='planner-backup.json';a.click()};
 $('importFile').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!d.habits||!d.tx)throw 0;if(!d.diary)d.diary=[];S=d;save();renderAll();alert('Данные загружены')}catch(err){alert('Неверный файл')}})};
