@@ -79,7 +79,11 @@ input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid
 .bars div{flex:1;background:var(--clay);border-radius:3px 3px 0 0;min-height:2px;position:relative}
 .bars div.full{background:var(--green)}
 .bars div:hover::after{content:attr(data-t);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);font-size:11px;padding:2px 5px;border-radius:4px;white-space:nowrap}
-.hidden{display:none}
+.hidden{display:none!important}
+input.edit{background:transparent;border-color:transparent;width:100%;min-width:90px}
+input.edit:hover,input.edit:focus{border-color:var(--line);background:var(--bg)}
+.done input.edit[data-f=title]{text-decoration:line-through;color:var(--muted)}
+.ren{cursor:pointer}.ren:hover{text-decoration:underline dotted}
 footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
 @media (max-width:600px){h1{font-size:28px;letter-spacing:3px} header{padding:10px 16px;position:static}}
 </style>
@@ -101,6 +105,10 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
   <button class="btn small" id="theme" title="Тема">◐</button>
 </header>
 <main>
+  <div id="demoBanner" class="card hidden" style="padding:12px 16px;margin-bottom:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--clay-l)">
+    <span style="flex:1 1 240px">👋 Сейчас показаны <b>примеры</b>. Всё можно менять под себя: нажмите на название, дату или сумму, чтобы отредактировать.</span>
+    <button class="btn primary" id="startClean">Начать с чистого листа</button><button class="btn" id="keepDemo">Оставить примеры</button>
+  </div>
   <!-- ПРИВЫЧКИ -->
   <section id="tab-habits">
     <h1 class="mname"></h1><div class="sub">аналитика привычек</div>
@@ -152,7 +160,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
         <input id="tTitle" placeholder="Что сделать?" style="flex:2 1 200px">
         <input id="tDue" type="date">
         <input id="tOwner" placeholder="Исполнитель">
-        <select id="tCat"><option>Работа/Учёба</option><option>Личное</option><option>Бизнес</option><option>Саморазвитие</option><option>Здоровье и спорт</option><option>Домашние дела</option></select>
+        <select id="tCat"></select>
         <select id="tPrio"><option>Критический</option><option>Высокий</option><option selected>Средний</option><option>Низкий</option></select>
         <button class="btn primary" id="addTask">Добавить</button>
       </div>
@@ -164,6 +172,10 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
     <div class="card"><h3>Список задач</h3><div class="body scroll">
       <div class="row" style="margin-bottom:8px"><select id="fStatus"><option value="">Все статусы</option></select><select id="fCat"><option value="">Все категории</option></select></div>
       <table id="taskTable"></table>
+      <details style="margin-top:12px"><summary style="cursor:pointer;color:var(--muted)">⚙ Настроить категории задач</summary>
+        <div id="catChips" class="row" style="margin:8px 0"></div>
+        <div class="row"><input id="newCat" placeholder="Новая категория"><button class="btn" id="addCat">Добавить</button></div>
+      </details>
     </div></div>
   </section>
 
@@ -216,11 +228,12 @@ function demo(){
     ['Встреча с партнёром',3,'Егор','Не начато','Бизнес','Высокий'],['Генеральная уборка',5,'Оля','В ожидании','Домашние дела','Низкий']
   ].map(([title,k,owner,status,cat,prio])=>({id:uid(),title,due:add(k),owner,status,cat,prio}));
   const goals=[{id:uid(),title:'Путешествие',target:150000,current:62000,deadline:add(120)},{id:uid(),title:'Подушка безопасности',target:300000,current:90000,deadline:add(300)}];
-  return {habits,checks,tx,budgets,tasks,goals};
+  return {habits,checks,tx,budgets,tasks,goals,demo:true};
 }
 let S;
 try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
 if(!S) S=demo();
+if(!S.taskCats) S.taskCats=['Работа/Учёба','Личное','Бизнес','Саморазвитие','Здоровье и спорт','Домашние дела'];
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 let cur=new Date(); cur.setDate(1);
 let tab='habits';
@@ -263,7 +276,7 @@ function renderHabits(){
   if(!S.habits.length) h+=`<tr><td colspan="${n+3}" class="empty">Добавьте первую привычку</td></tr>`;
   S.habits.forEach(hb=>{
     const arr=ch[hb.id]||[];
-    h+=`<tr><td class="name">${esc(hb.name)}</td>`;
+    h+=`<tr><td class="name ren" data-renh="${hb.id}" title="Нажмите, чтобы переименовать">${esc(hb.name)} ✎</td>`;
     for(let d=1;d<=n;d++){const on=arr.includes(d);h+=`<td><button class="chk ${on?'on':''}" data-h="${hb.id}" data-d="${d}" aria-label="${esc(hb.name)} ${d}">${on?'✓':''}</button></td>`}
     h+=`<td><b>${Math.round(arr.length/n*100)}%</b></td><td><button class="del" data-delh="${hb.id}" title="Удалить">×</button></td></tr>`;
   });
@@ -287,6 +300,8 @@ function renderHabits(){
 $('habitTable').addEventListener('click',e=>{
   const b=e.target.closest('.chk');
   if(b){const mk=mkey(),ch=S.checks[mk]||(S.checks[mk]={}),arr=ch[b.dataset.h]||(ch[b.dataset.h]=[]),d=+b.dataset.d,i=arr.indexOf(d);i<0?arr.push(d):arr.splice(i,1);save();renderHabits();return}
+  const rn=e.target.closest('[data-renh]');
+  if(rn){const hb=S.habits.find(h=>h.id===rn.dataset.renh),v=prompt('Новое название привычки',hb.name);if(v&&v.trim()){hb.name=v.trim();save();renderHabits()}return}
   const del=e.target.closest('[data-delh]');
   if(del&&confirm('Удалить привычку?')){S.habits=S.habits.filter(h=>h.id!==del.dataset.delh);save();renderHabits()}
 });
@@ -309,7 +324,7 @@ function renderFinance(){
   $('budgetTable').innerHTML='<tr><th>Категория</th><th class="num">План</th><th class="num">Факт</th><th>Прогресс</th><th></th></tr>'+
     (cats.length?cats.map(c=>{const p=+S.budgets[c]||0,f=ge[c]||0,r=p?f/p*100:0;return `<tr><td>${esc(c)}</td><td class="num">${p?money(p):'—'}</td><td class="num">${money(f)}</td><td><div class="bar"><i style="width:${Math.min(100,r)}%;${r>100?'background:var(--red)':''}"></i></div><small class="${r>100?'over':''}">${p?r.toFixed(0)+'%':'нет плана'}</small></td><td>${p?`<button class="del" data-delb="${esc(c)}" title="Убрать план">×</button>`:''}</td></tr>`}).join(''):'<tr><td colspan="5" class="empty">Нет данных</td></tr>');
   $('txTable').innerHTML='<tr><th>Дата</th><th>Категория</th><th class="num">Сумма</th><th></th></tr>'+
-    (list.length?list.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(t=>`<tr><td>${t.date.slice(8)}.${t.date.slice(5,7)}</td><td>${esc(t.cat)}${t.note?`<br><small style="color:var(--muted)">${esc(t.note)}</small>`:''}</td><td class="num" style="color:${t.type==='income'?'var(--green-d)':'var(--clay-d)'}">${t.type==='income'?'+':'−'}${money(+t.amount)}</td><td><button class="del" data-deltx="${t.id}" title="Удалить">×</button></td></tr>`).join(''):'<tr><td colspan="4" class="empty">Операций в этом месяце нет</td></tr>');
+    (list.length?list.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(t=>`<tr><td>${t.date.slice(8)}.${t.date.slice(5,7)}</td><td>${esc(t.cat)}${t.note?`<br><small style="color:var(--muted)">${esc(t.note)}</small>`:''}</td><td class="num ren" data-edtx="${t.id}" title="Нажмите, чтобы изменить сумму" style="color:${t.type==='income'?'var(--green-d)':'var(--clay-d)'}">${t.type==='income'?'+':'−'}${money(+t.amount)}</td><td><button class="del" data-deltx="${t.id}" title="Удалить">×</button></td></tr>`).join(''):'<tr><td colspan="4" class="empty">Операций в этом месяце нет</td></tr>');
   $('catList').innerHTML=[...new Set(S.tx.map(t=>t.cat).concat(Object.keys(S.budgets)))].map(c=>`<option value="${esc(c)}">`).join('');
 }
 $('addTx').onclick=()=>{
@@ -320,13 +335,16 @@ $('addTx').onclick=()=>{
   const d=new Date(date);cur=new Date(d.getFullYear(),d.getMonth(),1);renderAll();
 };
 $('addBud').onclick=()=>{const c=$('budCat').value.trim(),p=parseFloat($('budPlan').value);if(!c||!(p>=0)){alert('Укажите категорию и план');return}S.budgets[c]=p;$('budCat').value=$('budPlan').value='';save();renderFinance()};
-$('txTable').onclick=e=>{const b=e.target.closest('[data-deltx]');if(b){S.tx=S.tx.filter(t=>t.id!==b.dataset.deltx);save();renderFinance()}};
+$('txTable').onclick=e=>{const ed=e.target.closest('[data-edtx]');if(ed){const t=S.tx.find(x=>x.id===ed.dataset.edtx),v=parseFloat(String(prompt('Сумма, ₽',t.amount)).replace(',','.'));if(v>0){t.amount=v;save();renderFinance()}return}const b=e.target.closest('[data-deltx]');if(b){S.tx=S.tx.filter(t=>t.id!==b.dataset.deltx);save();renderFinance()}};
 $('budgetTable').onclick=e=>{const b=e.target.closest('[data-delb]');if(b){delete S.budgets[b.dataset.delb];save();renderFinance()}};
 
 /* ---------- Задачи ---------- */
 STATUSES.forEach(s=>$('fStatus').insertAdjacentHTML('beforeend',`<option>${s}</option>`));
-[...$('tCat').options].forEach(o=>$('fCat').insertAdjacentHTML('beforeend',`<option>${o.value}</option>`));
 function renderTasks(){
+  const fcv=$('fCat').value,tcv=$('tCat').value;
+  $('fCat').innerHTML='<option value="">Все категории</option>'+S.taskCats.map(c=>`<option ${c===fcv?'selected':''}>${esc(c)}</option>`).join('');
+  $('tCat').innerHTML=S.taskCats.map(c=>`<option ${c===tcv?'selected':''}>${esc(c)}</option>`).join('');
+  $('catChips').innerHTML=S.taskCats.map((c,i)=>`<span class="pill" style="background:var(--green-l);flex:0 0 auto">${esc(c)} <button class="del" data-delcat="${i}" title="Удалить категорию">×</button></span>`).join('');
   const T=S.tasks,today=todayISO(),done=T.filter(t=>t.status==='Выполнено').length;
   const overdue=T.filter(t=>t.status!=='Выполнено'&&t.due&&t.due<today).length;
   const week=new Date();week.setDate(week.getDate()+7);const wISO=`${week.getFullYear()}-${pad(week.getMonth()+1)}-${pad(week.getDate())}`;
@@ -339,19 +357,23 @@ function renderTasks(){
   const fs=$('fStatus').value,fc=$('fCat').value;
   const list=T.filter(t=>(!fs||t.status===fs)&&(!fc||t.cat===fc)).sort((a,b)=>(a.status==='Выполнено')-(b.status==='Выполнено')||(a.due||'').localeCompare(b.due||''));
   const opt=(arr,v)=>arr.map(o=>`<option ${o===v?'selected':''}>${o}</option>`).join('');
-  const cats=[...$('tCat').options].map(o=>o.value),prios=['Критический','Высокий','Средний','Низкий'];
+  const cats=[...new Set(S.taskCats.concat(T.map(t=>t.cat)))],prios=['Критический','Высокий','Средний','Низкий'];
   $('taskTable').innerHTML='<tr><th>Задача</th><th>Срок</th><th>Исполнитель</th><th>Статус</th><th>Категория</th><th>Приоритет</th><th></th></tr>'+
-    (list.length?list.map(t=>`<tr class="${t.status==='Выполнено'?'done':''}"><td class="t">${esc(t.title)}</td>
-    <td style="${t.status!=='Выполнено'&&t.due&&t.due<today?'color:var(--red);font-weight:600':''}">${t.due?t.due.split('-').reverse().join('.'):'—'}</td>
-    <td>${esc(t.owner||'—')}</td>
+    (list.length?list.map(t=>`<tr class="${t.status==='Выполнено'?'done':''}"><td class="t"><input class="edit" data-id="${t.id}" data-f="title" value="${esc(t.title)}"></td>
+    <td><input type="date" class="edit" data-id="${t.id}" data-f="due" value="${t.due||''}" style="${t.status!=='Выполнено'&&t.due&&t.due<today?'color:var(--red);font-weight:600':''}"></td>
+    <td><input class="edit" data-id="${t.id}" data-f="owner" value="${esc(t.owner||'')}" placeholder="—"></td>
     <td><select data-id="${t.id}" data-f="status">${opt(STATUSES,t.status)}</select></td>
     <td><select data-id="${t.id}" data-f="cat">${opt(cats,t.cat)}</select></td>
     <td><span class="pill p-${t.prio}">${t.prio}</span> <select data-id="${t.id}" data-f="prio" style="width:26px;padding:4px 2px" aria-label="Изменить приоритет">${opt(prios,t.prio)}</select></td>
     <td><button class="del" data-delt="${t.id}" title="Удалить">×</button></td></tr>`).join(''):'<tr><td colspan="7" class="empty">Задач нет</td></tr>');
 }
-$('taskTable').onchange=e=>{const s=e.target;if(s.dataset.id){const t=S.tasks.find(x=>x.id===s.dataset.id);t[s.dataset.f]=s.value;save();renderTasks()}};
+$('taskTable').onchange=e=>{const s=e.target;if(s.dataset.id){const t=S.tasks.find(x=>x.id===s.dataset.id);t[s.dataset.f]=s.dataset.f==='title'&&!s.value.trim()?t.title:s.value.trim();save();renderTasks()}};
 $('taskTable').onclick=e=>{const b=e.target.closest('[data-delt]');if(b&&confirm('Удалить задачу?')){S.tasks=S.tasks.filter(t=>t.id!==b.dataset.delt);save();renderTasks()}};
 $('fStatus').onchange=$('fCat').onchange=renderTasks;
+$('addCat').onclick=()=>{const v=$('newCat').value.trim();if(!v||S.taskCats.includes(v))return;S.taskCats.push(v);$('newCat').value='';save();renderTasks()};
+$('catChips').onclick=e=>{const b=e.target.closest('[data-delcat]');if(b&&confirm('Удалить категорию? Задачи в ней останутся.')){S.taskCats.splice(+b.dataset.delcat,1);save();renderTasks()}};
+$('startClean').onclick=()=>{S={habits:[],checks:{},tx:[],budgets:{},tasks:[],goals:[],taskCats:S.taskCats};save();renderAll()};
+$('keepDemo').onclick=()=>{delete S.demo;save();renderAll()};
 function addTask(){const title=$('tTitle').value.trim();if(!title){alert('Введите задачу');return}
   S.tasks.push({id:uid(),title,due:$('tDue').value,owner:$('tOwner').value.trim(),status:'Не начато',cat:$('tCat').value,prio:$('tPrio').value});
   $('tTitle').value=$('tDue').value=$('tOwner').value='';save();renderTasks()}
@@ -362,11 +384,14 @@ function renderGoals(){
   $('goalList').innerHTML=S.goals.length?S.goals.map(g=>{
     const p=g.target?g.current/g.target:0;
     let left='';if(g.deadline){const days=Math.ceil((new Date(g.deadline)-new Date())/864e5);const rest=Math.max(0,g.target-g.current);left=days>0?`Осталось ${days} дн. · откладывать ~${money(rest/Math.max(1,days/30))} в месяц`:'Срок прошёл'}
-    return `<div class="card"><h3>${esc(g.title)}</h3><div class="body"><div class="chart">${donut(p,(p*100).toFixed(0)+'%','НАКОПЛЕНО',p>=1?'var(--green)':'var(--clay)')}
+    return `<div class="card"><h3 class="ren" data-gedit="${g.id}" title="Нажмите, чтобы изменить цель">${esc(g.title)} ✎</h3><div class="body"><div class="chart">${donut(p,(p*100).toFixed(0)+'%','НАКОПЛЕНО',p>=1?'var(--green)':'var(--clay)')}
     <div><div><b>${money(g.current)}</b> из ${money(g.target)}</div><small style="color:var(--muted)">${left}</small>
     <div class="row" style="margin-top:10px"><input type="number" placeholder="Сумма" data-gin="${g.id}" style="width:110px"><button class="btn small primary" data-gadd="${g.id}">+ Внести</button><button class="btn small" data-gsub="${g.id}">− Снять</button><button class="del" data-gdel="${g.id}" title="Удалить">×</button></div></div></div></div></div>`}).join(''):'<div class="empty">Добавьте первую цель</div>';
 }
 $('goalList').onclick=e=>{
+  const ed=e.target.closest('[data-gedit]');
+  if(ed){const g=S.goals.find(x=>x.id===ed.dataset.gedit);const t=prompt('Название цели',g.title);if(t===null)return;const n=parseFloat(prompt('Нужная сумма, ₽',g.target));const d=prompt('Срок (ГГГГ-ММ-ДД), можно оставить пустым',g.deadline||'');
+    if(t.trim())g.title=t.trim();if(n>0)g.target=n;if(d!==null)g.deadline=/^\d{4}-\d{2}-\d{2}$/.test(d.trim())?d.trim():'';save();renderGoals();return}
   const t=e.target,id=t.dataset.gadd||t.dataset.gsub||t.dataset.gdel;if(!id)return;
   const g=S.goals.find(x=>x.id===id);
   if(t.dataset.gdel){if(confirm('Удалить цель?')){S.goals=S.goals.filter(x=>x.id!==id)}}
@@ -383,6 +408,7 @@ function renderAll(){
   document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   document.querySelectorAll('main>section').forEach(s=>s.classList.toggle('hidden',s.id!=='tab-'+tab));
   $('prev').parentElement.style.visibility=(tab==='habits'||tab==='finance')?'visible':'hidden';
+  $('demoBanner').classList.toggle('hidden',!S.demo);
   renderHabits();renderFinance();renderTasks();renderGoals();
 }
 $('nav').onclick=e=>{const b=e.target.closest('button');if(!b)return;tab=b.dataset.tab;try{localStorage.setItem(KEY+'-tab',tab)}catch(e){}renderAll()};
@@ -392,7 +418,7 @@ $('theme').onclick=()=>{const r=document.documentElement,dark=r.dataset.theme?r.
 try{const t=localStorage.getItem(KEY+'-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}
 $('exportBtn').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,2)],{type:'application/json'}));a.download='planner-backup.json';a.click()};
 $('importFile').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!d.habits||!d.tx)throw 0;S=d;save();renderAll();alert('Данные загружены')}catch(err){alert('Неверный файл')}})};
-$('resetBtn').onclick=()=>{if(confirm('Удалить все данные и начать с чистого листа?')){S={habits:[],checks:{},tx:[],budgets:{},tasks:[],goals:[]};save();renderAll()}};
+$('resetBtn').onclick=()=>{if(confirm('Удалить все данные и начать с чистого листа?')){S={habits:[],checks:{},tx:[],budgets:{},tasks:[],goals:[],taskCats:S.taskCats};save();renderAll()}};
 $('txDate').value=todayISO();
 renderAll();
 </script>
