@@ -224,7 +224,10 @@ body.no-owner .owner-col{display:none}
     <h1 id="todayTitle">Сегодня</h1><div class="sub" id="todaySub"></div>
     <div id="todayAlerts"></div>
     <div class="grid g2">
-      <div class="card"><h3>Привычки на сегодня</h3><div class="body" id="todayHabits"></div></div>
+      <div class="card"><h3>Привычки на сегодня</h3><div class="body">
+        <div id="todayHabits"></div>
+        <div class="row" style="margin-top:10px"><input id="qHabit" placeholder="Новая привычка"><button class="btn" id="qHabitAdd">+</button></div>
+      </div></div>
       <div class="card"><h3 class="clay">Задачи на сегодня</h3><div class="body">
         <div id="todayTasks"></div>
         <div class="row" style="margin-top:10px"><input id="qTask" placeholder="Быстрая задача на сегодня"><button class="btn" id="qTaskAdd">+</button></div>
@@ -350,7 +353,19 @@ body.no-owner .owner-col{display:none}
     <div id="diaryList"></div>
   </section>
 </main>
-<footer>Данные хранятся в этом браузере. <button class="btn small" id="exportBtn">Экспорт</button> <label class="btn small">Импорт<input type="file" id="importFile" accept=".json" hidden></label> <button class="btn small" id="resetBtn">Сбросить всё</button></footer>
+<footer>
+  <div class="card" style="max-width:520px;margin:0 auto 14px;padding:14px;text-align:left">
+    <b>💾 Резервная копия</b>
+    <div class="hint" style="margin:6px 0 10px">Данные хранятся только на этом устройстве. Раз в неделю отправляйте копию себе в <b>Telegram → «Избранное»</b> — там она не потеряется. Чтобы восстановить: скачайте файл из Telegram и нажмите «Восстановить из копии».</div>
+    <div class="row">
+      <button class="btn primary" id="shareBtn" style="flex:1 1 100%">📤 Отправить копию в Telegram</button>
+      <button class="btn" id="exportBtn">Скачать файл</button>
+      <label class="btn" style="text-align:center">Восстановить из копии<input type="file" id="importFile" accept=".json,.txt,application/json,text/plain" hidden></label>
+    </div>
+    <div class="hint ok" id="bkMsg"></div>
+  </div>
+  <button class="btn small" id="resetBtn">Сбросить всё</button>
+</footer>
 
 <div id="modal" class="modal hidden"><div class="modal-box">
   <canvas id="sumCanvas" width="1080" height="1350"></canvas>
@@ -466,11 +481,11 @@ $('habitTable').addEventListener('click',e=>{
   const b=e.target.closest('.chk');
   if(b){const dt=new Date(cur.getFullYear(),cur.getMonth(),+b.dataset.d),on=toggleCheck(b.dataset.h,dt);renderAll();celebrate(on,dt);return}
   const rn=e.target.closest('[data-renh]');
-  if(rn){const hb=S.habits.find(h=>h.id===rn.dataset.renh),v=prompt('Новое название привычки',hb.name);if(v&&v.trim()){hb.name=v.trim();save();renderHabits()}return}
+  if(rn){const hb=S.habits.find(h=>h.id===rn.dataset.renh),v=prompt('Новое название привычки',hb.name);if(v&&v.trim()){hb.name=v.trim();save();renderAll()}return}
   const del=e.target.closest('[data-delh]');
-  if(del&&confirm('Удалить привычку?')){S.habits=S.habits.filter(h=>h.id!==del.dataset.delh);save();renderHabits()}
+  if(del&&confirm('Удалить привычку?')){S.habits=S.habits.filter(h=>h.id!==del.dataset.delh);save();renderAll()}
 });
-function addHabit(){const v=$('habitInput').value.trim();if(!v)return;S.habits.push({id:uid(),name:v});$('habitInput').value='';save();renderHabits()}
+function addHabit(){const v=$('habitInput').value.trim();if(!v)return;S.habits.push({id:uid(),name:v});$('habitInput').value='';save();renderAll()}
 $('addHabit').onclick=addHabit;$('habitInput').onkeydown=e=>{if(e.key==='Enter')addHabit()};
 
 /* ---------- Финансы ---------- */
@@ -618,7 +633,19 @@ const applyStyle=v=>{if(!['','minimal','gold','noir'].includes(v||''))v='';if(v)
 try{applyStyle(localStorage.getItem(KEY+'-style')||'')}catch(e){}
 $('styleSel').onchange=e=>{applyStyle(e.target.value);try{localStorage.setItem(KEY+'-style',e.target.value)}catch(err){}renderAll()};
 try{const t=localStorage.getItem(KEY+'-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}
-$('exportBtn').onclick=()=>{S.lastBackup=Date.now();save();setTimeout(renderAll,0);const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,2)],{type:'application/json'}));a.download='planner-backup.json';a.click()};
+const bkName=()=>'planner-backup-'+todayISO()+'.txt';
+const bkBlob=()=>new Blob([JSON.stringify(S)],{type:'text/plain'});
+function markBackup(msg){S.lastBackup=Date.now();save();$('bkMsg').textContent=msg;setTimeout(renderAll,0)}
+function downloadBackup(){const a=document.createElement('a');a.href=URL.createObjectURL(bkBlob());a.download=bkName();a.click();
+  markBackup('✓ Файл сохранён в «Загрузки» ('+bkName()+'). Перешлите его себе в Telegram → «Избранное».')}
+$('exportBtn').onclick=downloadBackup;
+$('shareBtn').onclick=async()=>{
+  const f=new File([bkBlob()],bkName(),{type:'text/plain'});
+  if(navigator.canShare&&navigator.canShare({files:[f]})){
+    try{await navigator.share({files:[f],title:'Копия Планера Жизни',text:'Резервная копия Планера Жизни от '+new Date().toLocaleDateString('ru-RU')});markBackup('✓ Копия отправлена. Если выбрали Telegram → «Избранное» — она там.')}
+    catch(e){if(e.name!=='AbortError')downloadBackup()}
+  }else downloadBackup();
+};
 $('importFile').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!d.habits||!d.tx)throw 0;if(!d.diary)d.diary=[];S=d;save();renderAll();alert('Данные загружены')}catch(err){alert('Неверный файл')}})};
 $('resetBtn').onclick=()=>{if(confirm('Удалить все данные и начать с чистого листа?')){S={habits:[],checks:{},tx:[],budgets:{},tasks:[],goals:[],taskCats:S.taskCats,diary:[]};save();renderAll()}};
 /* ---------- Серии, отметки, праздник ---------- */
@@ -673,7 +700,7 @@ function renderToday(){
   const amount=S.habits.length+S.tx.length+S.diary.length+S.tasks.length;
   const wk=7*864e5;
   if(amount>=5&&(!S.lastBackup||Date.now()-S.lastBackup>wk)&&(!S.backupSnooze||Date.now()-S.backupSnooze>wk))
-    al+=`<div class="card alert"><span>💾 Данные хранятся только на этом устройстве. Сохраните резервную копию — это 2 секунды.</span><button class="btn primary small" id="bkNow">Сохранить копию</button><button class="btn small" id="bkLater">Позже</button></div>`;
+    al+=`<div class="card alert"><span>💾 Данные хранятся только на этом устройстве. Отправьте копию себе в Telegram — это 2 секунды.</span><button class="btn primary small" id="bkNow">📤 В Telegram</button><button class="btn small" id="bkLater">Позже</button></div>`;
   if(!isStandalone()&&!S.installHidden){
     const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
     if(deferredInstall)al+=`<div class="card alert"><span>📲 Установите планер на телефон — будет открываться как обычное приложение.</span><button class="btn primary small" id="instNow">Установить</button><button class="btn small" id="instHide">Скрыть</button></div>`;
@@ -683,7 +710,7 @@ function renderToday(){
   // привычки
   $('todayHabits').innerHTML=S.habits.length?S.habits.map(x=>{const on=isChecked(x.id,now),n=streak(x.id),k=x.id+'-'+mkOf(now)+'-'+now.getDate();
     return `<div class="hrow ${on?'done':''}" data-th="${x.id}"><span class="chk ${on?'on':''} ${on&&popKey===k?'pop':''}">${on?'✓':''}</span><span class="nm">${esc(x.name)}</span><span class="fire ${n?'':'cold'}">${n?'🔥 '+n+' '+dn(n):'начните серию'}</span></div>`}).join('')
-    :`<div class="empty">Привычек пока нет. <button class="btn small" data-go="habits">Добавить</button></div>`;
+    :`<div class="empty">Привычек пока нет — добавьте первую ниже 👇</div>`;
   // задачи на сегодня и просроченные
   const T=S.tasks.filter(t=>t.status!=='Выполнено'&&t.due&&t.due<=td).sort((a,b)=>a.due.localeCompare(b.due));
   const doneToday=S.tasks.filter(t=>t.status==='Выполнено'&&t.due===td);
@@ -702,7 +729,7 @@ function renderToday(){
 function dn(n){const a=n%10,b=n%100;return a===1&&b!==11?'день':a>=2&&a<=4&&(b<12||b>14)?'дня':'дней'}
 $('todayAlerts').onclick=e=>{
   const id=e.target.id;
-  if(id==='bkNow')$('exportBtn').click();
+  if(id==='bkNow')$('shareBtn').click();
   else if(id==='bkLater'){S.backupSnooze=Date.now();save();renderToday()}
   else if(id==='instNow'&&deferredInstall){deferredInstall.prompt();deferredInstall.userChoice.finally(()=>{deferredInstall=null;renderToday()})}
   else if(id==='instHide'){S.installHidden=true;save();renderToday()}
@@ -715,6 +742,8 @@ $('todayHabits').onclick=e=>{
 $('todayTasks').onclick=e=>{const r=e.target.closest('[data-tt]');if(!r)return;const t=S.tasks.find(x=>x.id===r.dataset.tt);t.status=t.status==='Выполнено'?'Не начато':'Выполнено';save();renderAll();
   if(t.status==='Выполнено'&&!S.tasks.some(x=>x.status!=='Выполнено'&&x.due&&x.due<=todayISO()))confetti()};
 function qTask(){const v=$('qTask').value.trim();if(!v)return;S.tasks.push({id:uid(),title:v,due:todayISO(),owner:'',status:'Не начато',cat:S.taskCats[0]||'Личное',prio:'Средний'});$('qTask').value='';save();renderAll()}
+function qHabit(){const v=$('qHabit').value.trim();if(!v){$('qHabit').focus();return}S.habits.push({id:uid(),name:v});$('qHabit').value='';save();renderAll()}
+$('qHabitAdd').onclick=qHabit;$('qHabit').onkeydown=e=>{if(e.key==='Enter')qHabit()};
 $('qTaskAdd').onclick=qTask;$('qTask').onkeydown=e=>{if(e.key==='Enter')qTask()};
 $('quickCats').onclick=e=>{
   const b=e.target.closest('[data-qc]');if(!b)return;
