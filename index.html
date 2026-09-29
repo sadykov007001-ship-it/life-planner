@@ -16,6 +16,10 @@
 :root[data-style="lavender"]{--bg:#f7f3fb;--card:#fffdff;--ink:#3d3450;--muted:#948aa6;--line:#e8e0f1;--green:#9b87c9;--green-d:#7b67ab;--green-l:#ece6f7;--clay:#e79ab4;--clay-d:#c96b8c;--clay-l:#fbe7ee;--radius:20px;--c1:#9b87c9;--c2:#e79ab4;--c3:#c9bde6;--c4:#f5c6d5;--c5:#7b67ab;--c6:#a7d3c9;--c7:#f2c98a;--c8:#c96b8c}
 :root[data-style="forest"]{--bg:#eef0ea;--card:#fbfbf7;--ink:#1f2a22;--muted:#6f7a70;--line:#d9ded3;--green:#24402f;--green-d:#24402f;--green-l:#dfe7dc;--clay:#b8913a;--clay-d:#94731f;--clay-l:#f1e8d0;--radius:8px;--c1:#24402f;--c2:#b8913a;--c3:#6b8f71;--c4:#d8c48f;--c5:#3f6b4c;--c6:#a9bfa5;--c7:#7d5a2c;--c8:#e3d9b8}
 :root[data-style="night"]{--bg:#12131c;--card:#1b1d2a;--ink:#e8e8f2;--muted:#8d90a8;--line:#2c2f42;--green:#7c6cf2;--green-d:#a79cff;--green-l:#27264a;--clay:#f2709c;--clay-d:#ff8fb4;--clay-l:#3a2233;--shadow:none;--hfont:system-ui,-apple-system,"Segoe UI",sans-serif;--radius:16px;--c1:#7c6cf2;--c2:#f2709c;--c3:#4fd1c5;--c4:#f6ad55;--c5:#a79cff;--c6:#68d391;--c7:#63b3ed;--c8:#fc8181}
+:root[data-style="gold"]{--bg:#0d0c0a;--card:#16140f;--ink:#f2ead8;--muted:#9c907a;--line:#2e281e;--green:#c9a24a;--green-d:#e0bf6e;--green-l:#2a2317;--clay:#c9a24a;--clay-d:#e0bf6e;--clay-l:#2a2317;--shadow:0 0 0 1px rgba(201,162,74,.08);--radius:6px;--c1:#c9a24a;--c2:#f2ead8;--c3:#8a6d2f;--c4:#e8d6a6;--c5:#5e5445;--c6:#b08968;--c7:#3f3a31;--c8:#f0c75e}
+:root[data-style="gold"] .card h3{background:transparent;color:var(--green-d);border-bottom:1px solid var(--line);letter-spacing:3px}
+:root[data-style="gold"] .chk.on,:root[data-style="gold"] nav button.active,:root[data-style="gold"] .btn.primary,:root[data-style="gold"] .btn.on{color:#0d0c0a}
+:root[data-style="gold"] h1{background:linear-gradient(90deg,#b8913a,#f0d58a,#b8913a);-webkit-background-clip:text;background-clip:text;color:transparent}
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#1d1b19; --card:#27241f; --ink:#ece5dc; --muted:#a39889; --line:#3a352e;
@@ -126,7 +130,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
     <button class="btn small" id="next" aria-label="Следующий месяц">›</button>
   </div>
   <select id="styleSel" title="Стиль оформления">
-    <option value="">🎨 Терракота</option><option value="minimal">🎨 Минимал</option><option value="lavender">🎨 Лаванда</option><option value="forest">🎨 Лес и золото</option><option value="night">🎨 Ночь</option>
+    <option value="">🎨 Терракота</option><option value="minimal">🎨 Минимал</option><option value="lavender">🎨 Лаванда</option><option value="forest">🎨 Лес и золото</option><option value="night">🎨 Ночь</option><option value="gold">🎨 Чёрное золото</option>
   </select>
   <button class="btn small" id="theme" title="Светлая / тёмная тема">◐</button>
 </header>
