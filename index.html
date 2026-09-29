@@ -80,6 +80,14 @@ input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid
 .bars div.full{background:var(--green)}
 .bars div:hover::after{content:attr(data-t);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);font-size:11px;padding:2px 5px;border-radius:4px;white-space:nowrap}
 .hidden{display:none!important}
+textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;width:100%;resize:vertical;margin:10px 0}
+.btn.on{background:var(--green);border-color:var(--green);color:#fff}
+.day{font-family:Georgia,serif;color:var(--clay-d);font-size:18px;margin:18px 0 8px}
+.note{padding:12px 14px;margin-bottom:10px}
+.note p{margin:0;white-space:pre-wrap;word-wrap:break-word}
+.note .meta{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:12px;margin-bottom:6px}
+.star{border:none;background:none;cursor:pointer;font-size:20px;color:var(--line);padding:0;line-height:1}
+.star.on{color:var(--yellow)}
 input.edit{background:transparent;border-color:transparent;width:100%;min-width:90px}
 input.edit:hover,input.edit:focus{border-color:var(--line);background:var(--bg)}
 .done input.edit[data-f=title]{text-decoration:line-through;color:var(--muted)}
@@ -96,6 +104,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
     <button data-tab="finance">Финансы</button>
     <button data-tab="tasks">Задачи</button>
     <button data-tab="goals">Цели</button>
+    <button data-tab="diary">Дневник</button>
   </nav>
   <div class="month">
     <button class="btn small" id="prev" aria-label="Предыдущий месяц">‹</button>
@@ -192,6 +201,21 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
     </div></div><br>
     <div class="grid g2" id="goalList"></div>
   </section>
+  <!-- ДНЕВНИК -->
+  <section id="tab-diary" class="hidden">
+    <h1>Дневник</h1><div class="sub">мысли, идеи, выводы дня</div>
+    <div class="card"><h3 class="clay">Новая запись</h3><div class="body">
+      <div class="row"><input id="dDate" type="date" style="flex:0 0 170px"><span style="color:var(--muted);flex:1 1 auto" id="dDateLabel"></span></div>
+      <textarea id="dText" rows="5" placeholder="О чём думаете сегодня?"></textarea>
+      <div class="row"><label style="flex:0 0 auto;cursor:pointer"><input type="checkbox" id="dFav"> ★ В избранное</label><span style="flex:1"></span><button class="btn primary" id="addNote">Сохранить запись</button></div>
+    </div></div><br>
+    <div class="row" style="margin-bottom:12px">
+      <button class="btn" id="dAll" style="flex:0 0 auto">Все записи</button>
+      <button class="btn" id="dFavBtn" style="flex:0 0 auto">★ Избранное</button>
+      <input id="dSearch" placeholder="Поиск по записям">
+    </div>
+    <div id="diaryList"></div>
+  </section>
 </main>
 <footer>Данные хранятся в этом браузере. <button class="btn small" id="exportBtn">Экспорт</button> <label class="btn small">Импорт<input type="file" id="importFile" accept=".json" hidden></label> <button class="btn small" id="resetBtn">Сбросить всё</button></footer>
 
@@ -232,7 +256,8 @@ function demo(){
 }
 let S;
 try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
-if(!S) S=demo();
+if(!S) S={habits:[],checks:{},tx:[],budgets:{},tasks:[],goals:[]};
+if(!S.diary) S.diary=[];
 if(!S.taskCats) S.taskCats=['Работа/Учёба','Личное','Бизнес','Саморазвитие','Здоровье и спорт','Домашние дела'];
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 let cur=new Date(); cur.setDate(1);
@@ -372,7 +397,7 @@ $('taskTable').onclick=e=>{const b=e.target.closest('[data-delt]');if(b&&confirm
 $('fStatus').onchange=$('fCat').onchange=renderTasks;
 $('addCat').onclick=()=>{const v=$('newCat').value.trim();if(!v||S.taskCats.includes(v))return;S.taskCats.push(v);$('newCat').value='';save();renderTasks()};
 $('catChips').onclick=e=>{const b=e.target.closest('[data-delcat]');if(b&&confirm('Удалить категорию? Задачи в ней останутся.')){S.taskCats.splice(+b.dataset.delcat,1);save();renderTasks()}};
-$('startClean').onclick=()=>{S={habits:[],checks:{},tx:[],budgets:{},tasks:[],goals:[],taskCats:S.taskCats};save();renderAll()};
+$('startClean').onclick=()=>{S={habits:[],checks:{},tx:[],budgets:{},tasks:[],goals:[],taskCats:S.taskCats,diary:S.diary};save();renderAll()};
 $('keepDemo').onclick=()=>{delete S.demo;save();renderAll()};
 function addTask(){const title=$('tTitle').value.trim();if(!title){alert('Введите задачу');return}
   S.tasks.push({id:uid(),title,due:$('tDue').value,owner:$('tOwner').value.trim(),status:'Не начато',cat:$('tCat').value,prio:$('tPrio').value});
@@ -401,6 +426,37 @@ $('goalList').onclick=e=>{
 $('addGoal').onclick=()=>{const title=$('gTitle').value.trim(),target=parseFloat($('gTarget').value);if(!title||!(target>0)){alert('Введите цель и сумму');return}
   S.goals.push({id:uid(),title,target,current:0,deadline:$('gDeadline').value});$('gTitle').value=$('gTarget').value=$('gDeadline').value='';save();renderGoals()};
 
+/* ---------- Дневник ---------- */
+let diaryFav=false;
+const fmtDay=iso=>{const [y,m,d]=iso.split('-').map(Number),dt=new Date(y,m-1,d);return dt.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long',year:'numeric'})};
+function renderDiary(){
+  $('dDateLabel').textContent=$('dDate').value?fmtDay($('dDate').value):'';
+  $('dAll').classList.toggle('on',!diaryFav);$('dFavBtn').classList.toggle('on',diaryFav);
+  const q=$('dSearch').value.trim().toLowerCase();
+  const list=S.diary.filter(n=>(!diaryFav||n.fav)&&(!q||n.text.toLowerCase().includes(q))).sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
+  if(!list.length){$('diaryList').innerHTML=`<div class="empty">${diaryFav?'В избранном пока пусто. Отмечайте важные записи звёздочкой ★':(q?'Ничего не найдено':'Записей пока нет — напишите первую')}</div>`;return}
+  let h='',last='';
+  list.forEach(n=>{
+    if(n.date!==last){h+=`<div class="day">${fmtDay(n.date)}</div>`;last=n.date}
+    h+=`<div class="card note"><div class="meta"><button class="star ${n.fav?'on':''}" data-fav="${n.id}" title="${n.fav?'Убрать из избранного':'В избранное'}">★</button><span>${n.time}</span><span style="flex:1"></span><button class="btn small" data-edn="${n.id}">Изменить</button><button class="del" data-deln="${n.id}" title="Удалить">×</button></div><p>${esc(n.text)}</p></div>`;
+  });
+  $('diaryList').innerHTML=h;
+}
+$('addNote').onclick=()=>{const text=$('dText').value.trim();if(!text){alert('Напишите что-нибудь');return}
+  const now=new Date();S.diary.push({id:uid(),date:$('dDate').value||todayISO(),time:`${pad(now.getHours())}:${pad(now.getMinutes())}`,text,fav:$('dFav').checked});
+  $('dText').value='';$('dFav').checked=false;save();renderDiary()};
+$('diaryList').onclick=e=>{
+  const f=e.target.closest('[data-fav]'),ed=e.target.closest('[data-edn]'),dl=e.target.closest('[data-deln]');
+  if(f){const n=S.diary.find(x=>x.id===f.dataset.fav);n.fav=!n.fav}
+  else if(ed){const n=S.diary.find(x=>x.id===ed.dataset.edn),v=prompt('Изменить запись',n.text);if(v===null||!v.trim())return;n.text=v.trim()}
+  else if(dl){if(!confirm('Удалить запись?'))return;S.diary=S.diary.filter(x=>x.id!==dl.dataset.deln)}
+  else return;
+  save();renderDiary()};
+$('dAll').onclick=()=>{diaryFav=false;renderDiary()};
+$('dFavBtn').onclick=()=>{diaryFav=true;renderDiary()};
+$('dSearch').oninput=renderDiary;$('dDate').onchange=renderDiary;
+$('dDate').value=todayISO();
+
 /* ---------- Общее ---------- */
 function renderAll(){
   $('monthLabel').textContent=`${MONTHS[cur.getMonth()]} ${cur.getFullYear()}`;
@@ -409,7 +465,7 @@ function renderAll(){
   document.querySelectorAll('main>section').forEach(s=>s.classList.toggle('hidden',s.id!=='tab-'+tab));
   $('prev').parentElement.style.visibility=(tab==='habits'||tab==='finance')?'visible':'hidden';
   $('demoBanner').classList.toggle('hidden',!S.demo);
-  renderHabits();renderFinance();renderTasks();renderGoals();
+  renderHabits();renderFinance();renderTasks();renderGoals();renderDiary();
 }
 $('nav').onclick=e=>{const b=e.target.closest('button');if(!b)return;tab=b.dataset.tab;try{localStorage.setItem(KEY+'-tab',tab)}catch(e){}renderAll()};
 $('prev').onclick=()=>{cur.setMonth(cur.getMonth()-1);renderAll()};
@@ -417,8 +473,8 @@ $('next').onclick=()=>{cur.setMonth(cur.getMonth()+1);renderAll()};
 $('theme').onclick=()=>{const r=document.documentElement,dark=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;r.dataset.theme=dark?'light':'dark';try{localStorage.setItem(KEY+'-theme',r.dataset.theme)}catch(e){}};
 try{const t=localStorage.getItem(KEY+'-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}
 $('exportBtn').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,2)],{type:'application/json'}));a.download='planner-backup.json';a.click()};
-$('importFile').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!d.habits||!d.tx)throw 0;S=d;save();renderAll();alert('Данные загружены')}catch(err){alert('Неверный файл')}})};
-$('resetBtn').onclick=()=>{if(confirm('Удалить все данные и начать с чистого листа?')){S={habits:[],checks:{},tx:[],budgets:{},tasks:[],goals:[],taskCats:S.taskCats};save();renderAll()}};
+$('importFile').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!d.habits||!d.tx)throw 0;if(!d.diary)d.diary=[];S=d;save();renderAll();alert('Данные загружены')}catch(err){alert('Неверный файл')}})};
+$('resetBtn').onclick=()=>{if(confirm('Удалить все данные и начать с чистого листа?')){S={habits:[],checks:{},tx:[],budgets:{},tasks:[],goals:[],taskCats:S.taskCats,diary:[]};save();renderAll()}};
 $('txDate').value=todayISO();
 renderAll();
 </script>
