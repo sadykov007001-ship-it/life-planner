@@ -360,7 +360,7 @@ body.no-owner .owner-col{display:none}
 const KEY='lifeplanner-v1';
 const MONTHS=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const WD=['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
-const DEF_EXP=['Еда','Транспорт','Кафе','Покупки','Хотелки','Здоровье','Развлечения','Дом и ЖКХ','Связь и интернет','Одежда','Красота','Подарки','Образование','Путешествия','Кредиты','Домашние животные'];
+const DEF_EXP=['Еда','Транспорт','Покупки','Хотелки','Здоровье','Развлечения','Одежда','Красота','Подарки','Образование','Путешествия','Кредиты','Домашние животные','Другое'];
 const DEF_INC=['Зарплата','Подработка','Бизнес','Проценты по вкладам','Кэшбэк','Подарки'];
 const STATUSES=['Не начато','В процессе','В ожидании','Выполнено'];
 const PALETTE=['#557d5f','#c98f78','#e0c3b3','#8fb396','#a86e58','#b9ccb9','#7a6a5c','#d9a441','#9fb0c8','#c65b4e'];
@@ -691,8 +691,8 @@ function renderToday(){
     :'<div class="empty">На сегодня задач нет 🎉</div>';
   // быстрые категории
   const freq={};S.tx.filter(t=>t.type==='expense').forEach(t=>freq[t.cat]=(freq[t.cat]||0)+1);
-  const cats=[...new Set(Object.keys(freq).sort((a,b)=>freq[b]-freq[a]).concat(['Еда','Транспорт','Кафе','Покупки','Хотелки','Здоровье','Развлечения']))].slice(0,9);
-  $('quickCats').innerHTML=cats.map(c=>`<button class="chip" data-qc="${esc(c)}">${esc(c)}</button>`).join('')+'<button class="chip" data-qc="">+ Другое</button>';
+  const cats=[...new Set(Object.keys(freq).sort((a,b)=>freq[b]-freq[a]).concat(['Еда','Транспорт','Покупки','Хотелки','Здоровье','Развлечения','Другое']))].slice(0,9);
+  $('quickCats').innerHTML=cats.map(c=>`<button class="chip" data-qc="${esc(c)}">${esc(c)}</button>`).join('')+'<button class="chip" data-qc="">+ Своя категория</button>';
   // настроение
   const m=S.moods[td];
   $('moodPick').innerHTML=MOODS.map((e,i)=>`<button class="${m===i+1?'on':''}" data-mood="${i+1}" title="${MOOD_NAMES[i]}">${e}</button>`).join('');
