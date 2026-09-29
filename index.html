@@ -360,6 +360,8 @@ body.no-owner .owner-col{display:none}
 const KEY='lifeplanner-v1';
 const MONTHS=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const WD=['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+const DEF_EXP=['Еда','Транспорт','Кафе','Покупки','Хотелки','Здоровье','Развлечения','Дом и ЖКХ','Связь и интернет','Одежда','Красота','Подарки','Образование','Путешествия','Кредиты','Домашние животные'];
+const DEF_INC=['Зарплата','Подработка','Бизнес','Проценты по вкладам','Кэшбэк','Подарки'];
 const STATUSES=['Не начато','В процессе','В ожидании','Выполнено'];
 const PALETTE=['#557d5f','#c98f78','#e0c3b3','#8fb396','#a86e58','#b9ccb9','#7a6a5c','#d9a441','#9fb0c8','#c65b4e'];
 const $=id=>document.getElementById(id);
@@ -488,7 +490,7 @@ function renderFinance(){
     (cats.length?cats.map(c=>{const p=+S.budgets[c]||0,f=ge[c]||0,r=p?f/p*100:0;return `<tr><td>${esc(c)}</td><td class="num">${p?money(p):'—'}</td><td class="num">${money(f)}</td><td><div class="bar"><i style="width:${Math.min(100,r)}%;${r>100?'background:var(--red)':''}"></i></div><small class="${r>100?'over':''}">${p?r.toFixed(0)+'%':'нет плана'}</small></td><td>${p?`<button class="del" data-delb="${esc(c)}" title="Убрать план">×</button>`:''}</td></tr>`}).join(''):'<tr><td colspan="5" class="empty">Нет данных</td></tr>');
   $('txTable').innerHTML='<tr><th>Дата</th><th>Категория</th><th class="num">Сумма</th><th></th></tr>'+
     (list.length?list.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(t=>`<tr><td>${t.date.slice(8)}.${t.date.slice(5,7)}</td><td>${esc(t.cat)}${t.note?`<br><small style="color:var(--muted)">${esc(t.note)}</small>`:''}</td><td class="num ren" data-edtx="${t.id}" title="Нажмите, чтобы изменить сумму" style="color:${t.type==='income'?'var(--green-d)':'var(--clay-d)'}">${t.type==='income'?'+':'−'}${money(+t.amount)}</td><td><button class="del" data-deltx="${t.id}" title="Удалить">×</button></td></tr>`).join(''):'<tr><td colspan="4" class="empty">Операций в этом месяце нет</td></tr>');
-  $('catList').innerHTML=[...new Set(S.tx.map(t=>t.cat).concat(Object.keys(S.budgets)))].map(c=>`<option value="${esc(c)}">`).join('');
+  $('catList').innerHTML=[...new Set(S.tx.filter(t=>t.type===$('txType').value).map(t=>t.cat).concat(Object.keys(S.budgets),$('txType').value==='income'?DEF_INC:DEF_EXP))].map(c=>`<option value="${esc(c)}">`).join('');
 }
 $('addTx').onclick=()=>{
   const cat=$('txCat').value.trim(),amount=parseFloat($('txAmount').value),date=$('txDate').value||todayISO();
@@ -497,6 +499,7 @@ $('addTx').onclick=()=>{
   $('txCat').value=$('txAmount').value=$('txNote').value='';save();
   const d=new Date(date);cur=new Date(d.getFullYear(),d.getMonth(),1);renderAll();
 };
+$('txType').onchange=renderFinance;
 $('addBud').onclick=()=>{const c=$('budCat').value.trim(),p=parseFloat($('budPlan').value);if(!c||!(p>=0)){alert('Укажите категорию и план');return}S.budgets[c]=p;$('budCat').value=$('budPlan').value='';save();renderFinance()};
 $('txTable').onclick=e=>{const ed=e.target.closest('[data-edtx]');if(ed){const t=S.tx.find(x=>x.id===ed.dataset.edtx),v=parseFloat(String(prompt('Сумма, ₽',t.amount)).replace(',','.'));if(v>0){t.amount=v;save();renderFinance()}return}const b=e.target.closest('[data-deltx]');if(b){S.tx=S.tx.filter(t=>t.id!==b.dataset.deltx);save();renderFinance()}};
 $('budgetTable').onclick=e=>{const b=e.target.closest('[data-delb]');if(b){delete S.budgets[b.dataset.delb];save();renderFinance()}};
@@ -688,7 +691,7 @@ function renderToday(){
     :'<div class="empty">На сегодня задач нет 🎉</div>';
   // быстрые категории
   const freq={};S.tx.filter(t=>t.type==='expense').forEach(t=>freq[t.cat]=(freq[t.cat]||0)+1);
-  const cats=[...new Set(Object.keys(freq).sort((a,b)=>freq[b]-freq[a]).concat(['Еда','Транспорт','Кафе','Покупки','Здоровье','Развлечения']))].slice(0,8);
+  const cats=[...new Set(Object.keys(freq).sort((a,b)=>freq[b]-freq[a]).concat(['Еда','Транспорт','Кафе','Покупки','Хотелки','Здоровье','Развлечения']))].slice(0,9);
   $('quickCats').innerHTML=cats.map(c=>`<button class="chip" data-qc="${esc(c)}">${esc(c)}</button>`).join('')+'<button class="chip" data-qc="">+ Другое</button>';
   // настроение
   const m=S.moods[td];
