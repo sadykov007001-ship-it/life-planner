@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Планер Жизни</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0b0b0b">
@@ -28,7 +28,7 @@ html:root[data-style="gold"]{--bg:#000;--card:#0b0b0b;--ink:#f2ead8;--muted:#9c9
 :root[data-style="gold"] .chk.on,:root[data-style="gold"] nav button.active,:root[data-style="gold"] .btn.primary,:root[data-style="gold"] .btn.on{color:#0d0c0a}
 :root[data-style="gold"] h1{background:linear-gradient(90deg,#b8913a,#f0d58a,#b8913a);-webkit-background-clip:text;background-clip:text;color:transparent}
 html:root[data-style="noir"]{--bg:#050607;--card:#0e1012;--ink:#d9dde1;--muted:#7b848c;--line:#23272b;--green:#2b3136;--green-d:#aeb8c1;--green-l:#1a1e22;--clay:#b87a3d;--clay-d:#d49a5c;--clay-l:#2a1f15;--shadow:0 12px 30px rgba(0,0,0,.6);--radius:2px;--hfont:"Avenir Next Condensed","Bahnschrift Condensed","Bahnschrift","Arial Narrow",sans-serif;--c1:#aeb8c1;--c2:#b87a3d;--c3:#5d6a75;--c4:#e2e6ea;--c5:#3a4148;--c6:#7d8f9e;--c7:#d49a5c;--c8:#8a5a2b}
-:root[data-style="noir"] body{background:radial-gradient(ellipse at top,#14181c 0%,#050607 60%) fixed,#050607}
+:root[data-style="noir"] body{background:radial-gradient(ellipse 120% 600px at top,#14181c 0%,#050607 100%) no-repeat,#050607}
 :root[data-style="noir"] .card{background:repeating-linear-gradient(45deg,rgba(255,255,255,.012) 0 2px,transparent 2px 4px),linear-gradient(180deg,#121518,#0b0d0f);border-color:#23272b}
 :root[data-style="noir"] .card h3{background:transparent;color:#aeb8c1;border-bottom:1px solid #23272b;font-family:var(--hfont);letter-spacing:4px;font-weight:600}
 :root[data-style="noir"] .card h3.clay{color:var(--clay-d)}
@@ -56,6 +56,10 @@ html:root[data-style="noir"]{--bg:#050607;--card:#0e1012;--ink:#d9dde1;--muted:#
   --green-l:#2c3a2f; --clay-l:#3d2d26; --shadow:none;
 }
 *{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;overflow-x:hidden}
+html,body{overscroll-behavior-y:none;max-width:100%}
+body{overflow-x:hidden;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.scroll{overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
 body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 20px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
 .logo{font-family:var(--hfont);font-size:22px;color:var(--clay-d);letter-spacing:.5px;margin-right:auto}
@@ -133,16 +137,12 @@ input.edit:hover,input.edit:focus{border-color:var(--line);background:var(--bg)}
 footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
 @media (max-width:600px){
   input,select,textarea{font-size:16px}
-  :root[data-style="noir"] nav{background:#050607}
-  :root[data-style="noir"] nav button{letter-spacing:.5px;font-size:11px}
   .stat b,:root[data-style="noir"] .stat b{font-size:20px;white-space:nowrap}
   .stat{padding:12px 8px}
   .habits td.name{min-width:120px;max-width:140px;white-space:normal}
   .card .body{padding:10px}
   header{gap:8px}
   .month span{min-width:100px;font-size:13px}
-  nav{position:fixed;bottom:0;left:0;right:0;z-index:10;background:var(--card);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
-  nav button{border:none;border-radius:10px;padding:8px 2px;font-size:12px}
   main{padding-bottom:90px} footer{padding-bottom:90px}
   .logo{font-size:18px}
   h1{font-size:28px;letter-spacing:3px} header{padding:10px 16px;position:static}}
@@ -189,19 +189,38 @@ body.no-owner .owner-col{display:none}
 .chk.pop{animation:pop .3s ease-out}
 .confetti{position:fixed;top:-10px;width:8px;height:14px;z-index:60;pointer-events:none;animation:fall 1.6s ease-in forwards}
 @keyframes fall{to{transform:translateY(105vh) rotate(720deg);opacity:.2}}
-@media (max-width:600px){nav{grid-template-columns:repeat(6,1fr)!important} nav button{font-size:10.5px!important;padding:8px 0!important;letter-spacing:0!important;overflow:hidden;text-overflow:ellipsis} :root[data-style="noir"] nav button{font-size:9px!important;text-transform:none}}
+/* ---- Нижнее меню на телефоне ---- */
+nav .ic{margin-right:5px}
+@media (max-width:600px){
+  nav{position:fixed;z-index:20;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));
+    display:grid;grid-template-columns:repeat(6,1fr);gap:2px;padding:6px;
+    background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:0 8px 28px rgba(0,0,0,.28)}
+  nav button,:root[data-style] nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    min-height:56px;padding:6px 0;border:none;border-radius:14px;background:transparent;color:var(--muted);
+    font-size:10.5px;letter-spacing:0;text-transform:none;font-weight:600;white-space:nowrap;overflow:hidden}
+  nav .ic{font-size:22px;line-height:1;margin:0;filter:grayscale(.6);opacity:.75}
+  nav button.active,:root[data-style] nav button.active{background:var(--green-l);color:var(--ink)}
+  nav button.active .ic{filter:none;opacity:1;transform:scale(1.1)}
+  :root[data-style="noir"] nav,:root[data-style="gold"] nav{background:#0d0e10;border-color:#2a2e33}
+  :root[data-style="noir"] nav button.active{background:#23282d;color:#e2e6ea}
+  :root[data-style="gold"] nav button.active{background:#2a2317;color:#e0bf6e}
+  main{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
+  footer{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
+  header{padding:10px 12px calc(10px) ;padding-top:calc(10px + env(safe-area-inset-top))}
+  .modal{padding-bottom:calc(16px + env(safe-area-inset-bottom))}
+}
 </style>
 </head>
 <body>
 <header>
   <div class="logo">✦ Планер Жизни</div>
   <nav id="nav">
-    <button data-tab="today" class="active">Сегодня</button>
-    <button data-tab="habits">Привычки</button>
-    <button data-tab="finance">Финансы</button>
-    <button data-tab="tasks">Задачи</button>
-    <button data-tab="goals">Цели</button>
-    <button data-tab="diary">Дневник</button>
+    <button data-tab="today" class="active"><span class="ic">🏠</span><span class="lb">Сегодня</span></button>
+    <button data-tab="habits"><span class="ic">✅</span><span class="lb">Привычки</span></button>
+    <button data-tab="finance"><span class="ic">💰</span><span class="lb">Финансы</span></button>
+    <button data-tab="tasks"><span class="ic">📋</span><span class="lb">Задачи</span></button>
+    <button data-tab="goals"><span class="ic">🎯</span><span class="lb">Цели</span></button>
+    <button data-tab="diary"><span class="ic">📔</span><span class="lb">Дневник</span></button>
   </nav>
   <div class="month">
     <button class="btn small" id="prev" aria-label="Предыдущий месяц">‹</button>
